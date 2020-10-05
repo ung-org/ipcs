@@ -96,7 +96,7 @@ struct ipc {
 	/* OUTSTANDING */
 	int cbytes;	/* MSG */
 	int qnum;	/* MSG */
-	int natcch;	/* SHM */
+	int nattch;	/* SHM */
 
 	/* BYTES */
 	int qbytes;	/* MSG */
@@ -137,6 +137,15 @@ static void print_group(int width, gid_t gid)
 	printf(" %-*d", width, gid);
 }
 
+static void print_time(int width, time_t t)
+{
+	if (t == 0) {
+		printf(" %-*s", width, "no-entry");
+		return;
+	}
+	printf(" %-*s", width, " ");
+}
+
 static void print_record(char type, int opts, struct ipc *entry)
 {
 	printf("%-*c", TYPE_WIDTH, entry->type);
@@ -145,6 +154,54 @@ static void print_record(char type, int opts, struct ipc *entry)
 	printf(" %-*s", MODE_WIDTH, entry->mode);
 	print_user(OWNER_WIDTH, entry->owner);
 	print_group(GROUP_WIDTH, entry->group);
+
+	if (opts & CREATOR) {
+		print_user(CREATOR_WIDTH, entry->creator);
+		print_group(CGROUP_WIDTH, entry->cgroup);
+	}
+
+	if (opts & OUTSTANDING) {
+		if (type == MSG) {
+			printf(" %-*d", CBYTES_WIDTH, entry->cbytes);
+			printf(" %-*d", QNUM_WIDTH, entry->qnum);
+		} else if (type == SHM) {
+			printf(" %-*d", NATTCH_WIDTH, entry->nattch);
+		}
+	}
+
+	if (opts & BYTES) {
+		if (type == MSG) {
+			printf(" %-*d", QBYTES_WIDTH, entry->qbytes);
+		} else if (type == SHM) {
+			printf(" %-*d", SEGSZ_WIDTH, entry->segsz);
+		} else if (type == SEM) {
+			printf(" %-*d", NSEMS_WIDTH, entry->nsems);
+		}
+	}
+
+	if (opts & PROCESS) {
+		if (type == MSG) {
+			printf(" %-*d", LSPID_WIDTH, entry->lspid);
+			printf(" %-*d", LRPID_WIDTH, entry->lrpid);
+		} else if (type == SHM) {
+			printf(" %-*d", CPID_WIDTH, entry->cpid);
+			printf(" %-*d", LPID_WIDTH, entry->lpid);
+		}
+	}
+
+	if (opts & TIME) {
+		if (type == MSG) {
+			print_time(STIME_WIDTH, entry->stime);
+			print_time(RTIME_WIDTH, entry->rtime);
+		} else if (type == SHM) {
+			print_time(ATIME_WIDTH, entry->atime);
+			print_time(DTIME_WIDTH, entry->dtime);
+		} else if (type == SEM) {
+			print_time(OTIME_WIDTH, entry->otime);
+		}
+
+		print_time(CTIME_WIDTH, entry->ctime);
+	}
 
 	printf("\n");
 }
